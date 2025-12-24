@@ -3,13 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistem Dashboard Sekolah - Vanilla JS</title>
+    <title>Sistem Dashboard Sekolah</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
     <!-- Icons (Lucide) -->
     <script src="https://unpkg.com/lucide@0.292.0"></script>
+
+    <!-- Google Identity Services SDK -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; }
@@ -23,7 +26,19 @@
 </head>
 <body class="bg-gray-50">
 
-    <div class="min-h-screen flex flex-col md:flex-row max-w-7xl mx-auto shadow-2xl overflow-hidden bg-white">
+    <!-- Auth Modal (Mencegah akses sebelum login) -->
+    <div id="auth-overlay" class="fixed inset-0 bg-gray-900/90 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center text-white mx-auto mb-4">
+                <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Akses Terbatas</h2>
+            <p class="text-gray-500 mb-6 text-sm">Silakan masuk dengan akun Google sekolah untuk menggunakan dashboard.</p>
+            <div id="google-btn-container" class="flex justify-center"></div>
+        </div>
+    </div>
+
+    <div id="main-app" class="min-h-screen flex flex-col md:flex-row max-w-7xl mx-auto shadow-2xl overflow-hidden bg-white blur-sm pointer-events-none transition-all duration-500">
         
         <!-- SIDEBAR -->
         <aside class="md:w-64 bg-white border-r border-gray-200 flex flex-col z-10">
@@ -35,7 +50,7 @@
             </div>
             
             <nav class="flex-1 p-4 space-y-2 overflow-y-auto" id="nav-menu">
-                <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors" data-tab="dashboard">
+                <button onclick="switchTab('dashboard')" class="nav-btn w-full flex items-center p-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-colors active-tab-btn" data-tab="dashboard">
                     <i data-lucide="layout-dashboard" class="mr-3 w-5 h-5"></i> Dashboard
                 </button>
                 <div class="pt-4 pb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider pl-3">Menu Utama</div>
@@ -50,36 +65,53 @@
                 </button>
             </nav>
 
+            <!-- Profil User Sidebar -->
             <div class="p-4 border-t border-gray-200">
                 <div class="flex items-center space-x-3 text-sm text-gray-600">
-                    <div class="bg-gray-200 p-2 rounded-full"><i data-lucide="user" class="w-4 h-4"></i></div>
-                    <div class="truncate w-full font-medium" id="user-display">Memuat...</div>
+                    <img id="user-photo" src="" class="w-8 h-8 rounded-full bg-gray-200 border border-gray-100 hidden">
+                    <div class="flex flex-col truncate">
+                        <span id="user-name" class="font-bold text-gray-800 truncate">Nama Guru</span>
+                        <span id="user-display" class="text-[10px] text-gray-400 truncate">email@sekolah.sch.id</span>
+                    </div>
                 </div>
-                <button onclick="manualSetEmail()" id="btn-change-user" class="mt-2 text-[10px] text-blue-600 hover:underline hidden">Ubah Email</button>
+                <button onclick="logout()" class="mt-3 w-full text-xs text-red-500 bg-red-50 hover:bg-red-100 py-2 rounded-lg font-medium transition-colors">Log Out</button>
             </div>
         </aside>
 
         <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-            
-            <!-- Notification Area -->
-            <div id="notification-container" class="fixed top-4 right-4 z-50 pointer-events-none"></div>
+            <div id="notification-container" class="fixed top-4 right-4 z-[110] pointer-events-none"></div>
 
             <!-- Tab: Dashboard -->
             <section id="tab-dashboard" class="tab-content p-8 overflow-y-auto">
-                <h2 class="text-2xl font-bold mb-6 text-gray-800">Selamat Datang</h2>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div onclick="switchTab('absensi')" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md cursor-pointer transition-all flex flex-col items-center">
-                        <div class="p-4 rounded-full bg-blue-100 mb-4 text-blue-600"><i data-lucide="clipboard-list" class="w-10 h-10"></i></div>
-                        <h3 class="font-bold">Input Absensi</h3>
+                <div class="mb-8">
+                    <h2 class="text-3xl font-extrabold text-gray-900" id="welcome-msg">Halo, Selamat Datang</h2>
+                    <p class="text-gray-500">Silakan pilih modul pembelajaran di bawah ini.</p>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div onclick="switchTab('absensi')" class="bg-blue-50 p-6 rounded-2xl border border-blue-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
+                        <div class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="clipboard-list"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-blue-900">Input Absensi</h3>
+                        <p class="text-blue-700/60 text-sm mt-1">Catat kehadiran siswa secara harian.</p>
                     </div>
-                    <div onclick="switchTab('nilai')" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md cursor-pointer transition-all flex flex-col items-center">
-                        <div class="p-4 rounded-full bg-purple-100 mb-4 text-purple-600"><i data-lucide="graduation-cap" class="w-10 h-10"></i></div>
-                        <h3 class="font-bold">Input Nilai</h3>
+                    
+                    <div onclick="switchTab('nilai')" class="bg-purple-50 p-6 rounded-2xl border border-purple-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
+                        <div class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="award"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-purple-900">Input Nilai</h3>
+                        <p class="text-purple-700/60 text-sm mt-1">Kelola nilai UH, PTS, dan PAS.</p>
                     </div>
-                    <div onclick="switchTab('jurnal')" class="bg-white p-6 rounded-xl shadow-sm border border-gray-100 hover:shadow-md cursor-pointer transition-all flex flex-col items-center">
-                        <div class="p-4 rounded-full bg-emerald-100 mb-4 text-emerald-600"><i data-lucide="book-open" class="w-10 h-10"></i></div>
-                        <h3 class="font-bold">Jurnal Kelas</h3>
+
+                    <div onclick="switchTab('jurnal')" class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
+                        <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                            <i data-lucide="book-open"></i>
+                        </div>
+                        <h3 class="font-bold text-lg text-emerald-900">Jurnal Guru</h3>
+                        <p class="text-emerald-700/60 text-sm mt-1">Lihat riwayat materi pembelajaran.</p>
                     </div>
                 </div>
             </section>
@@ -87,52 +119,30 @@
             <!-- Tab: Absensi -->
             <section id="tab-absensi" class="tab-content p-8 overflow-y-auto hidden-tab">
                 <div class="glass-panel p-6 rounded-xl shadow-sm border border-blue-100 mb-6">
-                    <h2 class="text-xl font-bold text-blue-800 mb-4 flex items-center"><i data-lucide="clipboard-list" class="mr-2"></i> Form Absensi</h2>
+                    <h2 class="text-xl font-bold text-blue-800 mb-4 flex items-center"><i data-lucide="clipboard-list" class="mr-2"></i> Form Absensi & Materi</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select id="absensi-kelas" onchange="loadSiswaAbsensi()" class="p-3 rounded border w-full bg-white">
+                        <select id="absensi-kelas" onchange="loadSiswaAbsensi()" class="p-3 rounded-lg border w-full bg-white focus:ring-2 ring-blue-300 outline-none">
                             <option value="">-- Pilih Kelas --</option>
                         </select>
-                        <select id="absensi-mapel" class="p-3 rounded border w-full bg-white">
+                        <select id="absensi-mapel" class="p-3 rounded-lg border w-full bg-white focus:ring-2 ring-blue-300 outline-none">
                             <option value="">-- Pilih Mapel --</option>
                         </select>
                     </div>
-                    
-                    <div class="mt-4">
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">Jam Pelajaran:</label>
-                        <div class="flex flex-wrap gap-2">
-                            <input type="checkbox" id="jam-1" value="1" class="hidden jam-checkbox">
-                            <label for="jam-1" class="px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">1</label>
-                            
-                            <input type="checkbox" id="jam-2" value="2" class="hidden jam-checkbox">
-                            <label for="jam-2" class="px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">2</label>
-                            
-                            <input type="checkbox" id="jam-3" value="3" class="hidden jam-checkbox">
-                            <label for="jam-3" class="px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">3</label>
-                            
-                            <input type="checkbox" id="jam-4" value="4" class="hidden jam-checkbox">
-                            <label for="jam-4" class="px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">4</label>
-                            
-                            <input type="checkbox" id="jam-5" value="5" class="hidden jam-checkbox">
-                            <label for="jam-5" class="px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">5</label>
-                            
-                            <input type="checkbox" id="jam-6" value="6" class="hidden jam-checkbox">
-                            <label for="jam-6" class="px-4 py-2 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">6</label>
-                        </div>
-                    </div>
-
-                    <input type="text" id="absensi-materi" placeholder="Isi Materi Pembelajaran..." class="w-full p-3 rounded border mt-4 outline-none focus:ring-2 ring-blue-300">
+                    <input type="text" id="absensi-materi" placeholder="Ketik materi yang diajarkan hari ini..." class="w-full p-3 rounded-lg border mt-4 outline-none focus:ring-2 ring-blue-300">
                 </div>
-                <div id="absensi-list" class="space-y-3 pb-24"></div>
+                <div id="absensi-list" class="space-y-3 pb-24">
+                    <div class="text-center p-12 text-gray-400 italic">Pilih kelas terlebih dahulu...</div>
+                </div>
             </section>
 
             <!-- Tab: Nilai -->
             <section id="tab-nilai" class="tab-content p-8 overflow-y-auto hidden-tab">
                 <div class="glass-panel p-6 rounded-xl shadow-sm border border-purple-100 mb-6">
-                    <h2 class="text-xl font-bold text-purple-800 mb-4 flex items-center"><i data-lucide="graduation-cap" class="mr-2"></i> Input Nilai</h2>
+                    <h2 class="text-xl font-bold text-purple-800 mb-4 flex items-center"><i data-lucide="award" class="mr-2"></i> Input Nilai Ujian</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <select id="nilai-kelas" onchange="loadSiswaNilai()" class="p-3 rounded border bg-white"><option value="">- Kelas -</option></select>
-                        <select id="nilai-mapel" class="p-3 rounded border bg-white"><option value="">- Mapel -</option></select>
-                        <select id="nilai-ujian" class="p-3 rounded border bg-white">
+                        <select id="nilai-kelas" onchange="loadSiswaNilai()" class="p-3 rounded-lg border bg-white focus:ring-2 ring-purple-300 outline-none"><option value="">- Kelas -</option></select>
+                        <select id="nilai-mapel" class="p-3 rounded-lg border bg-white focus:ring-2 ring-purple-300 outline-none"><option value="">- Mapel -</option></select>
+                        <select id="nilai-ujian" class="p-3 rounded-lg border bg-white focus:ring-2 ring-purple-300 outline-none">
                             <option value="">- Jenis Ujian -</option>
                             <option value="UH">UH</option>
                             <option value="PTS">PTS</option>
@@ -145,102 +155,117 @@
 
             <!-- Tab: Jurnal -->
             <section id="tab-jurnal" class="tab-content p-8 overflow-y-auto hidden-tab">
-                <div class="glass-panel p-6 rounded-xl shadow-sm border border-emerald-100 text-center mb-6">
-                    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-                        <h2 class="text-2xl font-bold text-emerald-800 flex items-center"><i data-lucide="book-open" class="mr-2"></i> Jurnal Kelas</h2>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-emerald-800">Riwayat Jurnal Mengajar</h2>
                         <button onclick="fetchJurnalData()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 flex items-center">
-                            <i data-lucide="refresh-cw" class="mr-2 w-4 h-4"></i> Muat Ulang
+                            <i data-lucide="refresh-cw" class="mr-2 w-4 h-4"></i> Segarkan Data
                         </button>
                     </div>
-                    <input type="text" id="jurnal-search" onkeyup="searchJurnal()" placeholder="Cari materi, kelas, atau mapel..." class="w-full max-w-lg p-3 rounded-full border shadow-sm outline-none focus:ring-2 ring-emerald-300 px-6 mt-4">
-                </div>
-                <div id="jurnal-container" class="overflow-x-auto rounded-lg border shadow-sm">
-                    <table class="min-w-full bg-white">
-                        <thead class="bg-emerald-50">
-                            <tr>
-                                <th class="p-3 text-left text-xs font-semibold text-emerald-700 uppercase tracking-wider">Tanggal</th>
-                                <th class="p-3 text-left text-xs font-semibold text-emerald-700 uppercase tracking-wider">Jam</th>
-                                <th class="p-3 text-left text-xs font-semibold text-emerald-700 uppercase tracking-wider">Kelas</th>
-                                <th class="p-3 text-left text-xs font-semibold text-emerald-700 uppercase tracking-wider">Mapel</th>
-                                <th class="p-3 text-left text-xs font-semibold text-emerald-700 uppercase tracking-wider">Materi</th>
-                                <th class="p-3 text-left text-xs font-semibold text-emerald-700 uppercase tracking-wider">Guru</th>
-                            </tr>
-                        </thead>
-                        <tbody id="jurnal-table-body" class="divide-y divide-gray-100">
-                            <tr><td colspan="6" class="p-8 text-center text-gray-400">Pilih tombol Muat Ulang untuk melihat data.</td></tr>
-                        </tbody>
-                    </table>
+                    <div id="jurnal-container" class="overflow-hidden rounded-lg border">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-emerald-50">
+                                <tr>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Tanggal</th>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Kelas</th>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Mapel</th>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Materi</th>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Guru</th>
+                                </tr>
+                            </thead>
+                            <tbody id="jurnal-table-body" class="bg-white divide-y divide-gray-100">
+                                <tr><td colspan="5" class="p-10 text-center text-gray-400">Klik segarkan data untuk memuat...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
-            <!-- Loading Overlay -->
             <div id="global-loader" class="absolute inset-0 bg-white/80 flex items-center justify-center z-50 hidden">
                 <div class="flex flex-col items-center">
-                    <div class="loader mb-2 w-10 h-10 border-4"></div>
-                    <span class="text-blue-600 font-bold">Memproses...</span>
+                    <div class="loader mb-2 w-12 h-12 border-4"></div>
+                    <span class="text-blue-600 font-bold tracking-widest text-xs uppercase">Sinkronisasi Data...</span>
                 </div>
             </div>
-
         </main>
     </div>
 
     <script>
-        // --- KONFIGURASI ---
+        // --- KONFIGURASI API ---
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyt1E66qvXcO_RuryVMLJcc_XB3lzjh2CxniaxSXViKip9Q1yZqDyp-8HsH1yayHbKO/exec";
-        
-        // --- STATE ---
+        const GOOGLE_CLIENT_ID = "142276774829-q7b6vicbq1hm1ltng7itehietn03l119.apps.googleusercontent.com";
+
         let dbStudents = [];
         let userEmail = "";
 
-        // --- INISIALISASI ---
+        // --- AUTH & INITIALIZATION ---
         window.onload = () => {
-            detectUserEmail();
+            initGoogleAuth();
             lucide.createIcons();
             fetchData();
         };
 
-        // Fungsi Deteksi Email Otomatis dengan Fallback
-        function detectUserEmail() {
-            // 1. Cek variabel global sistem
-            if (typeof __user_email !== 'undefined' && __user_email && __user_email !== "") {
-                userEmail = __user_email;
-            } 
-            // 2. Cek LocalStorage (jika sebelumnya sudah input manual)
-            else if (localStorage.getItem('saved_user_email')) {
-                userEmail = localStorage.getItem('saved_user_email');
-                document.getElementById('btn-change-user').classList.remove('hidden');
-            } 
-            // 3. Jika benar-benar tidak ada (Chrome biasa), tampilkan modal/prompt sederhana sekali saja
-            else {
-                userEmail = prompt("Email tidak terdeteksi otomatis. Silakan masukkan email Anda untuk identitas guru:", "guru@gmail.com");
-                if (!userEmail) userEmail = "guru@gmail.com";
-                localStorage.setItem('saved_user_email', userEmail);
-                document.getElementById('btn-change-user').classList.remove('hidden');
+        function initGoogleAuth() {
+            try {
+                google.accounts.id.initialize({
+                    client_id: GOOGLE_CLIENT_ID,
+                    callback: handleAuthResponse,
+                    auto_select: true
+                });
+                google.accounts.id.renderButton(
+                    document.getElementById("google-btn-container"),
+                    { theme: "outline", size: "large", text: "signin_with", width: 250 }
+                );
+            } catch (e) {
+                console.error("GSI Load Failed.");
+                document.getElementById('auth-overlay').innerHTML += `
+                    <button onclick="manualLoginFallback()" class="mt-4 bg-gray-800 text-white px-6 py-2 rounded-lg text-sm">Login Manual (Cadangan)</button>
+                `;
             }
+        }
+
+        function handleAuthResponse(response) {
+            const payload = JSON.parse(atob(response.credential.split('.')[1]));
+            userEmail = payload.email;
             
+            // Update UI Profil
             document.getElementById('user-display').innerText = userEmail;
+            document.getElementById('user-name').innerText = payload.name;
+            document.getElementById('user-photo').src = payload.picture;
+            document.getElementById('user-photo').classList.remove('hidden');
+            document.getElementById('welcome-msg').innerText = `Halo, ${payload.given_name}!`;
+            
+            // Unlock App
+            document.getElementById('auth-overlay').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('blur-sm', 'pointer-events-none');
+            
+            showNotify('success', `Selamat Datang, ${payload.given_name}`);
         }
 
-        function manualSetEmail() {
-            const newEmail = prompt("Masukkan email baru:", userEmail);
-            if (newEmail) {
-                userEmail = newEmail;
-                localStorage.setItem('saved_user_email', userEmail);
+        function manualLoginFallback() {
+            const email = prompt("Masukkan email Anda untuk identitas:");
+            if(email) {
+                userEmail = email;
                 document.getElementById('user-display').innerText = userEmail;
-                showNotify('success', 'Email berhasil diperbarui.');
+                document.getElementById('auth-overlay').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('blur-sm', 'pointer-events-none');
             }
         }
 
-        // --- FETCH DATA AWAL ---
+        function logout() {
+            google.accounts.id.disableAutoSelect();
+            location.reload();
+        }
+
+        // --- DATA LOGIC ---
         async function fetchData() {
             showLoader(true);
             try {
                 const res = await fetch(`${GAS_API_URL}?action=get_db`);
                 dbStudents = await res.json();
                 populateFilters();
-                showNotify('success', 'Data database berhasil dimuat.');
             } catch (e) {
-                showNotify('error', 'Gagal memuat database.');
+                showNotify('error', 'Gagal memuat database siswa.');
             } finally {
                 showLoader(false);
             }
@@ -248,109 +273,72 @@
 
         function populateFilters() {
             const classes = [...new Set(dbStudents.map(s => s.kelas))].filter(Boolean).sort();
-            const subjects = [...new Set(dbStudents.map(s => s.mapel))].filter(Boolean).sort();
-
             const classSelects = ['absensi-kelas', 'nilai-kelas'];
-            const subjectSelects = ['absensi-mapel', 'nilai-mapel'];
-
+            
             classSelects.forEach(id => {
                 const el = document.getElementById(id);
-                el.innerHTML = `<option value="">-- Pilih Kelas --</option>`;
-                classes.forEach(c => el.add(new Option(c, c)));
+                if(el) {
+                    el.innerHTML = `<option value="">-- Pilih Kelas --</option>`;
+                    classes.forEach(c => el.add(new Option(c, c)));
+                }
             });
 
+            const subjects = [...new Set(dbStudents.map(s => s.mapel))].filter(Boolean).sort();
+            const subjectSelects = ['absensi-mapel', 'nilai-mapel'];
             subjectSelects.forEach(id => {
                 const el = document.getElementById(id);
-                el.innerHTML = `<option value="">-- Pilih Mapel --</option>`;
-                subjects.forEach(s => el.add(new Option(s, s)));
+                if(el) {
+                    el.innerHTML = `<option value="">-- Pilih Mapel --</option>`;
+                    subjects.forEach(s => el.add(new Option(s, s)));
+                }
             });
         }
 
-        // --- NAVIGATION ---
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden-tab'));
             document.getElementById(`tab-${tabId}`).classList.remove('hidden-tab');
-            
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active-tab-btn');
                 if(btn.dataset.tab === tabId) btn.classList.add('active-tab-btn');
             });
-
-            if (tabId === 'jurnal') fetchJurnalData();
+            if(tabId === 'jurnal') fetchJurnalData();
         }
 
-        // --- ABSENSI LOGIC ---
+        // --- LOGIC INPUT (ABSENSI & NILAI) ---
         function loadSiswaAbsensi() {
             const kelas = document.getElementById('absensi-kelas').value;
             const container = document.getElementById('absensi-list');
-            
-            if(!kelas) {
-                container.innerHTML = '';
-                return;
-            }
+            if(!kelas) { container.innerHTML = ''; return; }
 
-            const uniqueStudents = [];
-            const map = new Map();
-            for (const s of dbStudents) {
-                if (s.kelas === kelas && !map.has(s.nama)) {
-                    map.set(s.nama, true);
-                    uniqueStudents.push(s);
-                }
-            }
-            
-            container.innerHTML = uniqueStudents.map(s => `
-                <div class="bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center" data-nisn="${s.nisn || ''}">
-                    <div>
-                        <div class="font-bold text-gray-800">${s.nama}</div>
-                        <div class="text-xs text-gray-500">Kelas: ${s.kelas}</div>
-                    </div>
+            const filtered = dbStudents.filter(s => s.kelas === kelas);
+            container.innerHTML = filtered.map(s => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center" data-nisn="${s.nisn}">
+                    <div class="font-bold text-gray-700">${s.nama}</div>
                     <div class="flex space-x-2">
-                        <select class="p-1 border rounded text-sm status-select bg-gray-50">
-                            <option value="H">Hadir</option>
-                            <option value="S">Sakit</option>
-                            <option value="I">Izin</option>
-                            <option value="A">Alpha</option>
+                        <select class="p-2 border rounded-lg text-sm status-select bg-gray-50 outline-none">
+                            <option value="H">Hadir</option><option value="S">Sakit</option>
+                            <option value="I">Izin</option><option value="A">Alpha</option>
                         </select>
-                        <input type="number" value="100" class="w-16 p-1 border rounded text-center nilai-input focus:ring-1 ring-blue-400 outline-none">
+                        <input type="number" value="100" class="w-16 p-2 border rounded-lg text-center nilai-input">
                     </div>
                 </div>
-            `).join('');
-            
-            if (!document.getElementById('btn-save-absensi')) {
-                const btn = document.createElement('button');
-                btn.id = 'btn-save-absensi';
-                btn.className = "fixed bottom-6 right-6 bg-blue-600 text-white px-8 py-3 rounded-full shadow-xl font-bold hover:bg-blue-700 z-20 transition-transform active:scale-95";
-                btn.innerText = "Simpan Absensi";
-                btn.onclick = saveAbsensi;
-                container.appendChild(btn);
-            }
+            `).join('') + `<button onclick="saveAbsensi()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg hover:bg-blue-700">Simpan Data Absensi</button>`;
         }
 
         async function saveAbsensi() {
             const mapel = document.getElementById('absensi-mapel').value;
             const materi = document.getElementById('absensi-materi').value;
-            const selectedJams = Array.from(document.querySelectorAll('.jam-checkbox:checked')).map(cb => cb.value);
-            
-            if(!mapel) return showNotify('error', 'Pilih Mata Pelajaran!');
-            if(!materi) return showNotify('error', 'Materi wajib diisi!');
-            if(selectedJams.length === 0) return showNotify('error', 'Pilih minimal satu jam pelajaran!');
+            if(!mapel || !materi) return showNotify('error', 'Pilih Mapel dan isi Materi!');
 
             showLoader(true);
             const rows = [];
-            const cards = document.querySelectorAll('#absensi-list > div[data-nisn]');
-            
-            cards.forEach(card => {
-                const nisn = card.dataset.nisn;
-                const nama = card.querySelector('.font-bold').innerText;
-                const status = card.querySelector('.status-select').value;
-                const nilai = card.querySelector('.nilai-input').value;
-
+            document.querySelectorAll('#absensi-list > div').forEach(card => {
                 rows.push({
-                    nisn, nama, 
-                    kehadiran: status, 
-                    nilaiHarian: nilai,
+                    nisn: card.dataset.nisn,
+                    nama: card.querySelector('.font-bold').innerText,
+                    kehadiran: card.querySelector('.status-select').value,
+                    nilaiHarian: card.querySelector('.nilai-input').value,
                     materi: materi,
-                    jam: selectedJams.join(','),
                     email: userEmail,
                     tanggal: new Date().toISOString().split('T')[0],
                     kelas: document.getElementById('absensi-kelas').value,
@@ -359,179 +347,44 @@
             });
 
             try {
-                await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'save_absensi', rows })
-                });
-                showNotify('success', 'Data absensi tersimpan!');
-                document.getElementById('absensi-list').innerHTML = '';
-                document.getElementById('absensi-materi').value = '';
-                document.querySelectorAll('.jam-checkbox').forEach(cb => cb.checked = false);
-            } catch (e) {
-                showNotify('error', 'Gagal menyimpan.');
-            } finally {
-                showLoader(false);
-            }
-        }
-
-        // --- NILAI LOGIC ---
-        function loadSiswaNilai() {
-            const kelas = document.getElementById('nilai-kelas').value;
-            const container = document.getElementById('nilai-list');
-            
-            if(!kelas) {
-                container.innerHTML = '';
-                return;
-            }
-
-            const uniqueStudents = [];
-            const map = new Map();
-            for (const s of dbStudents) {
-                if (s.kelas === kelas && !map.has(s.nama)) {
-                    map.set(s.nama, true);
-                    uniqueStudents.push(s);
-                }
-            }
-            
-            container.innerHTML = uniqueStudents.map(s => `
-                <div class="bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center" data-nisn="${s.nisn || ''}">
-                    <div>
-                        <div class="font-bold text-gray-800">${s.nama}</div>
-                        <div class="text-xs text-gray-500">Siswa Kelas: ${s.kelas}</div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <input type="number" placeholder="Nilai" class="w-24 p-2 border rounded text-center nilai-ujian-input focus:ring-1 ring-purple-400 outline-none">
-                    </div>
-                </div>
-            `).join('');
-
-            if (!document.getElementById('btn-save-nilai')) {
-                const btn = document.createElement('button');
-                btn.id = 'btn-save-nilai';
-                btn.className = "fixed bottom-6 right-6 bg-purple-600 text-white px-8 py-3 rounded-full shadow-xl font-bold hover:bg-purple-700 z-20 transition-transform active:scale-95";
-                btn.innerText = "Simpan Nilai";
-                btn.onclick = saveNilai;
-                container.appendChild(btn);
-            }
-        }
-
-        async function saveNilai() {
-            const jenis = document.getElementById('nilai-ujian').value;
-            const kelas = document.getElementById('nilai-kelas').value;
-            const mapel = document.getElementById('nilai-mapel').value;
-
-            if(!mapel || !jenis) return showNotify('error', 'Pilih Mapel dan Jenis Ujian!');
-
-            showLoader(true);
-            const rows = [];
-            const cards = document.querySelectorAll('#nilai-list > div[data-nisn]');
-            
-            cards.forEach(card => {
-                const nisn = card.dataset.nisn;
-                const nama = card.querySelector('.font-bold').innerText;
-                const nilai = card.querySelector('.nilai-ujian-input').value;
-
-                if(nilai) {
-                    rows.push({
-                        nisn, nama, 
-                        jenisUjian: jenis,
-                        nilai: nilai,
-                        email: userEmail,
-                        tanggal: new Date().toISOString().split('T')[0],
-                        kelas: kelas,
-                        mapel: mapel
-                    });
-                }
-            });
-
-            try {
-                await fetch(GAS_API_URL, {
-                    method: 'POST',
-                    body: JSON.stringify({ action: 'save_nilai', rows })
-                });
-                showNotify('success', 'Data nilai tersimpan!');
-                document.getElementById('nilai-list').innerHTML = '';
-            } catch (e) {
-                showNotify('error', 'Gagal menyimpan nilai.');
-            } finally {
-                showLoader(false);
-            }
-        }
-
-        // --- JURNAL LOGIC ---
-        async function fetchJurnalData() {
-            const tbody = document.getElementById('jurnal-table-body');
-            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500"><div class="loader mb-2"></div><br>Mengambil riwayat jurnal...</td></tr>';
-            
-            try {
-                const res = await fetch(`${GAS_API_URL}?action=get_absensi_history`);
-                const data = await res.json();
-                
-                if (!data || data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">Belum ada data jurnal tersimpan di database.</td></tr>';
-                    return;
-                }
-
-                const uniqueJournals = [];
-                const seenKeys = new Set();
-                
-                data.forEach(item => {
-                    const key = `${item.tanggal}|${item.kelas}|${item.mapel}|${item.jam}`;
-                    if (!seenKeys.has(key)) {
-                        seenKeys.add(key);
-                        uniqueJournals.push(item);
-                    }
-                });
-
-                uniqueJournals.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
-
-                if (uniqueJournals.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-500">Data jurnal tidak tersedia.</td></tr>';
-                    return;
-                }
-
-                tbody.innerHTML = uniqueJournals.map(j => `
-                    <tr class="hover:bg-gray-50 transition-colors">
-                        <td class="p-3 text-sm text-gray-700 whitespace-nowrap font-medium">${j.tanggal}</td>
-                        <td class="p-3 text-sm text-gray-600">Jam: ${j.jam || '-'}</td>
-                        <td class="p-3 text-sm text-gray-700 font-bold">${j.kelas}</td>
-                        <td class="p-3 text-sm text-emerald-700 font-semibold">${j.mapel}</td>
-                        <td class="p-3 text-xs text-gray-600 max-w-xs truncate" title="${j.materi || '-'}">${j.materi || '-'}</td>
-                        <td class="p-3 text-xs text-gray-400 italic">${j.email || 'Guru'}</td>
-                    </tr>
-                `).join('');
-                
-            } catch (e) {
-                console.error(e);
-                tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-red-500 bg-red-50 rounded-lg">Gagal mengambil data jurnal.</td></tr>';
-            }
+                await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'save_absensi', rows }) });
+                showNotify('success', 'Absensi Berhasil Disimpan!');
+                switchTab('dashboard');
+            } catch(e) { showNotify('error', 'Gagal menyimpan.'); }
+            finally { showLoader(false); }
         }
 
         // --- UI HELPERS ---
         function showNotify(type, msg) {
             const container = document.getElementById('notification-container');
             const el = document.createElement('div');
-            el.className = `p-4 mb-2 rounded-lg shadow-lg border text-white transition-all duration-500 transform translate-x-10 opacity-0 ${type === 'success' ? 'bg-green-500 border-green-600' : 'bg-red-500 border-red-600'}`;
+            el.className = `p-4 mb-2 rounded-xl shadow-xl border text-white font-medium transition-all duration-500 transform translate-x-10 opacity-0 ${type === 'success' ? 'bg-emerald-500 border-emerald-600' : 'bg-red-500 border-red-600'}`;
             el.innerText = msg;
             container.appendChild(el);
-            
             setTimeout(() => { el.classList.remove('translate-x-10', 'opacity-0'); }, 10);
-            setTimeout(() => { 
-                el.classList.add('translate-x-10', 'opacity-0');
-                setTimeout(() => el.remove(), 500);
-            }, 3000);
+            setTimeout(() => { el.classList.add('translate-x-10', 'opacity-0'); setTimeout(() => el.remove(), 500); }, 3000);
         }
 
         function showLoader(show) {
             document.getElementById('global-loader').classList.toggle('hidden', !show);
         }
 
-        function searchJurnal() {
-            const val = document.getElementById('jurnal-search').value.toLowerCase();
-            const rows = document.querySelectorAll('#jurnal-table-body tr');
-            rows.forEach(row => {
-                row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
-            });
+        async function fetchJurnalData() {
+            const tbody = document.getElementById('jurnal-table-body');
+            tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center"><div class="loader"></div></td></tr>';
+            try {
+                const res = await fetch(`${GAS_API_URL}?action=get_absensi_history`);
+                const data = await res.json();
+                tbody.innerHTML = data.reverse().slice(0, 50).map(j => `
+                    <tr class="text-sm">
+                        <td class="p-4 text-gray-500">${j.tanggal}</td>
+                        <td class="p-4 font-bold text-gray-800">${j.kelas}</td>
+                        <td class="p-4 text-blue-600 font-medium">${j.mapel}</td>
+                        <td class="p-4 text-gray-600 italic">${j.materi || '-'}</td>
+                        <td class="p-4 text-xs text-gray-400">${j.email || 'Guru'}</td>
+                    </tr>
+                `).join('');
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="5" class="p-10 text-center text-red-500">Gagal memuat data.</td></tr>'; }
         }
     </script>
 </body>
