@@ -102,7 +102,7 @@
                             <i data-lucide="award"></i>
                         </div>
                         <h3 class="font-bold text-lg text-purple-900">Input Nilai</h3>
-                        <p class="text-purple-700/60 text-sm mt-1">Kelola nilai UH, PTS, dan PAS.</p>
+                        <p class="text-purple-700/60 text-sm mt-1">Kelola nilai UH, UTS, dan UAS.</p>
                     </div>
                     <div onclick="switchTab('jurnal')" class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
                         <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
@@ -129,6 +129,24 @@
                     <input type="text" id="absensi-materi" placeholder="Ketik materi yang diajarkan hari ini..." class="w-full p-3 rounded-lg border mt-4 outline-none focus:ring-2 ring-blue-300">
                 </div>
                 <div id="absensi-list" class="space-y-3 pb-24"></div>
+            </section>
+
+            <!-- Tab: Nilai -->
+            <section id="tab-nilai" class="tab-content p-8 overflow-y-auto hidden-tab">
+                <div class="glass-panel p-6 rounded-xl shadow-sm border border-purple-100 mb-6">
+                    <h2 class="text-xl font-bold text-purple-800 mb-4 flex items-center"><i data-lucide="graduation-cap" class="mr-2"></i> Input Nilai</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <select id="nilai-kelas" onchange="loadSiswaNilai()" class="p-3 rounded border bg-white"><option value="">- Kelas -</option></select>
+                        <select id="nilai-mapel" class="p-3 rounded border bg-white"><option value="">- Mapel -</option></select>
+                        <select id="nilai-ujian" class="p-3 rounded border bg-white">
+                            <option value="">- Jenis Ujian -</option>
+                            <option value="UH">UH</option>
+                            <option value="PTS">PTS</option>
+                            <option value="PAS">PAS</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="nilai-list" class="space-y-3 pb-24"></div>
             </section>
 
             <!-- Tab: Jurnal -->
@@ -305,6 +323,90 @@
                 switchTab('dashboard');
             } catch(e) { showNotify('error', 'Gagal!'); }
             finally { showLoader(false); }
+        }
+
+        // --- NILAI LOGIC ---
+        function loadSiswaNilai() {
+            const kelas = document.getElementById('nilai-kelas').value;
+            const container = document.getElementById('nilai-list');
+
+            if(!kelas) {
+                container.innerHTML = '';
+                return;
+            }
+
+            const uniqueStudents = [];
+            const map = new Map();
+            for (const s of dbStudents) {
+                if (s.kelas === kelas && !map.has(s.nama)) {
+                    map.set(s.nama, true);
+                    uniqueStudents.push(s);
+                }
+            }
+
+            container.innerHTML = uniqueStudents.map(s => `
+                <div class="bg-white p-4 rounded-lg shadow-sm border flex justify-between items-center" data-nisn="${s.nisn || ''}">
+                    <div>
+                        <div class="font-bold text-gray-800">${s.nama}</div>
+                        <div class="text-xs text-gray-500">Siswa Kelas: ${s.kelas}</div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <input type="number" placeholder="Nilai" class="w-24 p-2 border rounded text-center nilai-ujian-input focus:ring-1 ring-purple-400 outline-none">
+                    </div>
+                </div>
+            `).join('');
+
+            if (!document.getElementById('btn-save-nilai')) {
+                const btn = document.createElement('button');
+                btn.id = 'btn-save-nilai';
+                btn.className = "fixed bottom-6 right-6 bg-purple-600 text-white px-8 py-3 rounded-full shadow-xl font-bold hover:bg-purple-700 z-20 transition-transform active:scale-95";
+                btn.innerText = "Simpan Nilai";
+                btn.onclick = saveNilai;
+                container.appendChild(btn);
+            }
+        }
+
+        async function saveNilai() {
+            const jenis = document.getElementById('nilai-ujian').value;
+            const kelas = document.getElementById('nilai-kelas').value;
+            const mapel = document.getElementById('nilai-mapel').value;
+
+            if(!mapel || !jenis) return showNotify('error', 'Pilih Mapel dan Jenis Ujian!');
+
+            showLoader(true);
+            const rows = [];
+            const cards = document.querySelectorAll('#nilai-list > div[data-nisn]');
+
+            cards.forEach(card => {
+                const nisn = card.dataset.nisn;
+                const nama = card.querySelector('.font-bold').innerText;
+                const nilai = card.querySelector('.nilai-ujian-input').value;
+
+                if(nilai) {
+                    rows.push({
+                        nisn, nama,
+                        jenisUjian: jenis,
+                        nilai: nilai,
+                        email: userEmail,
+                        tanggal: new Date().toISOString().split('T')[0],
+                        kelas: kelas,
+                        mapel: mapel
+                    });
+                }
+            });
+
+            try {
+                await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'save_nilai', rows })
+                });
+                showNotify('success', 'Data nilai tersimpan!');
+                document.getElementById('nilai-list').innerHTML = '';
+            } catch (e) {
+                showNotify('error', 'Gagal menyimpan nilai.');
+            } finally {
+                showLoader(false);
+            }
         }
 
         async function fetchJurnalData() {
