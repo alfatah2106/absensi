@@ -21,12 +21,11 @@
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         .hidden-tab { display: none; }
         .active-tab-btn { background-color: #eff6ff; color: #1d4ed8; font-weight: 600; }
-        input[type="checkbox"]:checked + label { background-color: #3b82f6; color: white; border-color: #3b82f6; }
     </style>
 </head>
 <body class="bg-gray-50">
 
-    <!-- Auth Modal (Layar Kunci) -->
+    <!-- Auth Modal -->
     <div id="auth-overlay" class="fixed inset-0 bg-gray-900/90 z-[100] flex items-center justify-center p-4">
         <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
             <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center text-white mx-auto mb-4">
@@ -85,49 +84,33 @@
             <section id="tab-dashboard" class="tab-content p-8 overflow-y-auto">
                 <div class="mb-8">
                     <h2 class="text-3xl font-extrabold text-gray-900" id="welcome-msg">Halo, Selamat Datang</h2>
-                    <p class="text-gray-500">Silakan pilih modul pembelajaran di bawah ini.</p>
+                    <p class="text-gray-500">Pilih modul pembelajaran di bawah.</p>
                 </div>
-                
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div onclick="switchTab('absensi')" class="bg-blue-50 p-6 rounded-2xl border border-blue-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
-                        <div class="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <i data-lucide="clipboard-list"></i>
-                        </div>
-                        <h3 class="font-bold text-lg text-blue-900">Input Absensi</h3>
-                        <p class="text-blue-700/60 text-sm mt-1">Catat kehadiran siswa secara harian.</p>
+                    <div onclick="switchTab('absensi')" class="bg-blue-50 p-6 rounded-2xl border border-blue-100 cursor-pointer hover:shadow-lg transition-all">
+                        <i data-lucide="clipboard-list" class="mb-4 text-blue-600"></i>
+                        <h3 class="font-bold text-blue-900">Absensi Siswa</h3>
                     </div>
-                    
-                    <div onclick="switchTab('nilai')" class="bg-purple-50 p-6 rounded-2xl border border-purple-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
-                        <div class="w-12 h-12 bg-purple-600 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <i data-lucide="award"></i>
-                        </div>
-                        <h3 class="font-bold text-lg text-purple-900">Input Nilai</h3>
-                        <p class="text-purple-700/60 text-sm mt-1">Kelola nilai UH, PTS, dan PAS.</p>
+                    <div onclick="switchTab('nilai')" class="bg-purple-50 p-6 rounded-2xl border border-purple-100 cursor-pointer hover:shadow-lg transition-all">
+                        <i data-lucide="award" class="mb-4 text-purple-600"></i>
+                        <h3 class="font-bold text-purple-900">Input Nilai</h3>
                     </div>
-
-                    <div onclick="switchTab('jurnal')" class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 hover:shadow-xl hover:-translate-y-1 transition-all cursor-pointer group">
-                        <div class="w-12 h-12 bg-emerald-600 text-white rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                            <i data-lucide="book-open"></i>
-                        </div>
-                        <h3 class="font-bold text-lg text-emerald-900">Jurnal Guru</h3>
-                        <p class="text-emerald-700/60 text-sm mt-1">Lihat riwayat materi pembelajaran.</p>
+                    <div onclick="switchTab('jurnal')" class="bg-emerald-50 p-6 rounded-2xl border border-emerald-100 cursor-pointer hover:shadow-lg transition-all">
+                        <i data-lucide="book-open" class="mb-4 text-emerald-600"></i>
+                        <h3 class="font-bold text-emerald-900">Jurnal Guru</h3>
                     </div>
                 </div>
             </section>
 
             <!-- Tab: Absensi -->
             <section id="tab-absensi" class="tab-content p-8 overflow-y-auto hidden-tab">
-                <div class="glass-panel p-6 rounded-xl shadow-sm border border-blue-100 mb-6">
-                    <h2 class="text-xl font-bold text-blue-800 mb-4 flex items-center"><i data-lucide="clipboard-list" class="mr-2"></i> Form Absensi & Materi</h2>
+                <div class="glass-panel p-6 rounded-xl shadow-sm border mb-6">
+                    <h2 class="text-xl font-bold text-blue-800 mb-4 flex items-center"><i data-lucide="clipboard-list" class="mr-2"></i> Input Kehadiran</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <select id="absensi-kelas" onchange="loadSiswaAbsensi()" class="p-3 rounded-lg border w-full bg-white outline-none">
-                            <option value="">-- Pilih Kelas --</option>
-                        </select>
-                        <select id="absensi-mapel" class="p-3 rounded-lg border w-full bg-white outline-none">
-                            <option value="">-- Pilih Mapel --</option>
-                        </select>
+                        <select id="absensi-kelas" onchange="loadSiswaAbsensi()" class="p-3 rounded-lg border w-full bg-white outline-none"><option value="">-- Pilih Kelas --</option></select>
+                        <select id="absensi-mapel" class="p-3 rounded-lg border w-full bg-white outline-none"><option value="">-- Pilih Mapel --</option></select>
                     </div>
-                    <input type="text" id="absensi-materi" placeholder="Ketik materi yang diajarkan hari ini..." class="w-full p-3 rounded-lg border mt-4 outline-none focus:ring-2 ring-blue-300">
+                    <input type="text" id="absensi-materi" placeholder="Ketik materi hari ini..." class="w-full p-3 rounded-lg border mt-4 outline-none focus:ring-2 ring-blue-300">
                 </div>
                 <div id="absensi-list" class="space-y-3 pb-24"></div>
             </section>
@@ -139,11 +122,9 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <select id="nilai-kelas" onchange="loadSiswaNilai()" class="p-3 rounded-lg border bg-white outline-none"><option value="">- Kelas -</option></select>
                         <select id="nilai-mapel" class="p-3 rounded-lg border bg-white outline-none"><option value="">- Mapel -</option></select>
+                        <!-- Dropdown Jenis Ujian yang akan diisi otomatis dari Sheet db Kolom E -->
                         <select id="nilai-ujian" class="p-3 rounded-lg border bg-white outline-none">
                             <option value="">- Jenis Ujian -</option>
-                            <option value="UH">UH</option>
-                            <option value="PTS">PTS</option>
-                            <option value="PAS">PAS</option>
                         </select>
                     </div>
                 </div>
@@ -155,7 +136,7 @@
                 <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold text-emerald-800">Riwayat Jurnal Mengajar</h2>
-                        <button onclick="fetchJurnalData()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-emerald-700 flex items-center">
+                        <button onclick="fetchJurnalData()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm flex items-center">
                             <i data-lucide="refresh-cw" class="mr-2 w-4 h-4"></i> Segarkan Data
                         </button>
                     </div>
@@ -197,9 +178,7 @@
 
         function checkExistingSession() {
             const savedUser = localStorage.getItem('school_user');
-            if (savedUser) {
-                applyUserData(JSON.parse(savedUser));
-            }
+            if (savedUser) applyUserData(JSON.parse(savedUser));
         }
 
         function applyUserData(data) {
@@ -215,15 +194,9 @@
 
         function initGoogleAuth() {
             try {
-                google.accounts.id.initialize({
-                    client_id: GOOGLE_CLIENT_ID,
-                    callback: handleAuthResponse
-                });
-                google.accounts.id.renderButton(
-                    document.getElementById("google-btn-container"),
-                    { theme: "outline", size: "large", width: 250 }
-                );
-            } catch (e) { console.error("Auth init failed"); }
+                google.accounts.id.initialize({ client_id: GOOGLE_CLIENT_ID, callback: handleAuthResponse });
+                google.accounts.id.renderButton(document.getElementById("google-btn-container"), { theme: "outline", size: "large", width: 250 });
+            } catch (e) { console.error("Auth failed"); }
         }
 
         function handleAuthResponse(response) {
@@ -233,10 +206,7 @@
             showNotify('success', `Berhasil Login!`);
         }
 
-        function logout() {
-            localStorage.removeItem('school_user');
-            location.reload();
-        }
+        function logout() { localStorage.removeItem('school_user'); location.reload(); }
 
         async function fetchData() {
             showLoader(true);
@@ -244,11 +214,12 @@
                 const res = await fetch(`${GAS_API_URL}?action=get_db`);
                 dbStudents = await res.json();
                 populateFilters();
-            } catch (e) { showNotify('error', 'Gagal memuat database.'); }
+            } catch (e) { showNotify('error', 'Gagal memuat data.'); }
             finally { showLoader(false); }
         }
 
         function populateFilters() {
+            // Filter Kelas
             const classes = [...new Set(dbStudents.map(s => s.kelas))].filter(Boolean).sort();
             ['absensi-kelas', 'nilai-kelas'].forEach(id => {
                 const el = document.getElementById(id);
@@ -258,6 +229,7 @@
                 }
             });
 
+            // Filter Mapel
             const subjects = [...new Set(dbStudents.map(s => s.mapel))].filter(Boolean).sort();
             ['absensi-mapel', 'nilai-mapel'].forEach(id => {
                 const el = document.getElementById(id);
@@ -266,6 +238,16 @@
                     subjects.forEach(s => el.add(new Option(s, s)));
                 }
             });
+
+            // Filter Jenis Ujian dari Kolom E (biasanya diakses via properti 'jenis_ujian' atau 'kolom_e')
+            // Berdasarkan Code.gs headers.toLowerCase().replace(/ /g, '_')
+            // Misal di Sheet db Kolom E header-nya adalah "Jenis Ujian"
+            const examTypes = [...new Set(dbStudents.map(s => s.jenis_ujian || s.ujian || s.kategori))].filter(Boolean).sort();
+            const examEl = document.getElementById('nilai-ujian');
+            if (examEl) {
+                examEl.innerHTML = `<option value="">- Jenis Ujian -</option>`;
+                examTypes.forEach(t => examEl.add(new Option(t, t)));
+            }
         }
 
         function switchTab(tabId) {
@@ -278,7 +260,6 @@
             if(tabId === 'jurnal') fetchJurnalData();
         }
 
-        // --- FORM ABSENSI ---
         function loadSiswaAbsensi() {
             const kelas = document.getElementById('absensi-kelas').value;
             const container = document.getElementById('absensi-list');
@@ -287,12 +268,12 @@
             container.innerHTML = filtered.map(s => `
                 <div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center" data-nisn="${s.nisn}">
                     <div class="font-bold text-gray-700">${s.nama}</div>
-                    <select class="p-2 border rounded-lg text-sm status-select bg-gray-50 outline-none">
+                    <select class="p-2 border rounded-lg text-sm status-select bg-gray-50">
                         <option value="H">Hadir</option><option value="S">Sakit</option>
                         <option value="I">Izin</option><option value="A">Alpha</option>
                     </select>
                 </div>
-            `).join('') + `<button onclick="saveAbsensi()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-xl font-bold shadow-lg">Simpan Absensi</button>`;
+            `).join('') + `<button onclick="saveAbsensi()" class="w-full mt-6 bg-blue-600 text-white py-4 rounded-xl font-bold">Simpan Absensi</button>`;
         }
 
         async function saveAbsensi() {
@@ -302,27 +283,24 @@
             if(!mapel || !materi) return showNotify('error', 'Isi Mapel dan Materi!');
 
             showLoader(true);
-            const rows = [];
-            document.querySelectorAll('#absensi-list > div[data-nisn]').forEach(card => {
-                rows.push({
-                    nisn: card.dataset.nisn,
-                    nama: card.querySelector('.font-bold').innerText,
-                    kehadiran: card.querySelector('.status-select').value,
-                    materi, email: userEmail,
-                    tanggal: new Date().toISOString().split('T')[0],
-                    kelas, mapel
-                });
-            });
+            const rows = document.querySelectorAll('#absensi-list > div[data-nisn]');
+            const dataRows = Array.from(rows).map(card => ({
+                nisn: card.dataset.nisn,
+                nama: card.querySelector('.font-bold').innerText,
+                kehadiran: card.querySelector('.status-select').value,
+                materi, email: userEmail,
+                tanggal: new Date().toISOString().split('T')[0],
+                kelas, mapel
+            }));
 
             try {
-                await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'save_absensi', rows }) });
-                showNotify('success', 'Absensi Berhasil Disimpan!');
+                await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'save_absensi', rows: dataRows }) });
+                showNotify('success', 'Berhasil Disimpan!');
                 switchTab('dashboard');
-            } catch(e) { showNotify('error', 'Gagal menyimpan.'); }
+            } catch(e) { showNotify('error', 'Gagal.'); }
             finally { showLoader(false); }
         }
 
-        // --- FORM NILAI ---
         function loadSiswaNilai() {
             const kelas = document.getElementById('nilai-kelas').value;
             const container = document.getElementById('nilai-list');
@@ -330,67 +308,62 @@
             const filtered = dbStudents.filter(s => s.kelas === kelas);
             container.innerHTML = filtered.map(s => `
                 <div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center" data-nisn="${s.nisn}">
-                    <div class="font-bold text-gray-700">${s.nama}</div>
+                    <div class="font-bold text-gray-800">${s.nama}</div>
                     <input type="number" placeholder="Nilai" class="w-24 p-2 border rounded-lg text-center nilai-val outline-none focus:ring-2 ring-purple-300">
                 </div>
-            `).join('') + `<button onclick="saveNilai()" class="w-full mt-6 bg-purple-600 text-white py-4 rounded-xl font-bold shadow-lg">Simpan Nilai Ujian</button>`;
+            `).join('') + `<button onclick="saveNilai()" class="w-full mt-6 bg-purple-600 text-white py-4 rounded-xl font-bold">Simpan Nilai</button>`;
         }
 
         async function saveNilai() {
             const mapel = document.getElementById('nilai-mapel').value;
             const ujian = document.getElementById('nilai-ujian').value;
             const kelas = document.getElementById('nilai-kelas').value;
-            if(!mapel || !ujian) return showNotify('error', 'Lengkapi Mapel dan Jenis Ujian!');
+            if(!mapel || !ujian) return showNotify('error', 'Pilih Mapel dan Jenis Ujian!');
 
             showLoader(true);
-            const rows = [];
-            document.querySelectorAll('#nilai-list > div[data-nisn]').forEach(card => {
+            const rows = document.querySelectorAll('#nilai-list > div[data-nisn]');
+            const dataRows = Array.from(rows).map(card => {
                 const val = card.querySelector('.nilai-val').value;
-                if(val !== "") {
-                    rows.push({
-                        nisn: card.dataset.nisn,
-                        nama: card.querySelector('.font-bold').innerText,
-                        nilai: val,
-                        jenisUjian: ujian,
-                        email: userEmail,
-                        tanggal: new Date().toISOString().split('T')[0],
-                        kelas, mapel
-                    });
-                }
-            });
+                return val ? {
+                    nisn: card.dataset.nisn,
+                    nama: card.querySelector('.font-bold').innerText,
+                    nilai: val, jenisUjian: ujian, email: userEmail,
+                    tanggal: new Date().toISOString().split('T')[0],
+                    kelas, mapel
+                } : null;
+            }).filter(r => r !== null);
 
-            if(rows.length === 0) { showLoader(false); return showNotify('error', 'Isi minimal satu nilai!'); }
+            if(dataRows.length === 0) { showLoader(false); return showNotify('error', 'Isi Nilai!'); }
 
             try {
-                await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'save_nilai', rows }) });
-                showNotify('success', 'Nilai Berhasil Disimpan!');
+                await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'save_nilai', rows: dataRows }) });
+                showNotify('success', 'Nilai Tersimpan!');
                 switchTab('dashboard');
-            } catch(e) { showNotify('error', 'Gagal menyimpan nilai.'); }
+            } catch(e) { showNotify('error', 'Gagal.'); }
             finally { showLoader(false); }
         }
 
-        // --- JURNAL ---
         async function fetchJurnalData() {
             const tbody = document.getElementById('jurnal-table-body');
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center"><div class="loader"></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center">Memuat...</td></tr>';
             try {
                 const res = await fetch(`${GAS_API_URL}?action=get_absensi_history`);
                 const data = await res.json();
                 tbody.innerHTML = data.reverse().slice(0, 30).map(j => `
-                    <tr class="text-sm border-b border-gray-50">
+                    <tr class="text-sm">
                         <td class="p-4 text-gray-500">${j.tanggal}</td>
                         <td class="p-4 font-bold text-gray-800">${j.kelas}</td>
                         <td class="p-4 text-blue-600 font-medium">${j.mapel}</td>
                         <td class="p-4 text-gray-600 italic">${j.materi || '-'}</td>
                     </tr>
                 `).join('');
-            } catch(e) { tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Gagal memuat data.</td></tr>'; }
+            } catch(e) { tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Gagal.</td></tr>'; }
         }
 
         function showNotify(type, msg) {
             const container = document.getElementById('notification-container');
             const el = document.createElement('div');
-            el.className = `p-4 mb-2 rounded-xl shadow-xl text-white font-medium transition-all ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
+            el.className = `p-4 mb-2 rounded-xl shadow-lg text-white font-medium ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`;
             el.innerText = msg;
             container.appendChild(el);
             setTimeout(() => el.remove(), 4000);
