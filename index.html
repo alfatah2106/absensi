@@ -132,29 +132,45 @@
             </section>
 
             <!-- Tab: Jurnal -->
-            <section id="tab-jurnal" class="tab-content p-8 overflow-y-auto hidden-tab">
-                <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-emerald-800">Riwayat Jurnal Mengajar</h2>
-                        <button onclick="fetchJurnalData()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm flex items-center">
-                            <i data-lucide="refresh-cw" class="mr-2 w-4 h-4"></i> Segarkan Data
-                        </button>
-                    </div>
-                    <div id="jurnal-container" class="overflow-x-auto rounded-lg border">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-emerald-50">
-                                <tr>
-                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Tanggal</th>
-                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Kelas</th>
-                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Mapel</th>
-                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Materi</th>
-                                </tr>
-                            </thead>
-                            <tbody id="jurnal-table-body" class="bg-white divide-y divide-gray-100"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
+ 			<section id="tab-jurnal" class="tab-content p-8 overflow-y-auto hidden-tab">
+				<div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6">
+					<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+						<h2 class="text-xl font-bold text-emerald-800">Riwayat Jurnal Mengajar</h2>
+						<button onclick="fetchJurnalData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm flex items-center transition-colors">
+							<i data-lucide="refresh-cw" class="mr-2 w-4 h-4"></i> Segarkan Data
+						</button>
+					</div>
+
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-emerald-50 p-4 rounded-lg">
+						<div>
+							<label class="block text-xs font-bold text-emerald-700 uppercase mb-1">Filter Kelas</label>
+							<select id="filter-jurnal-kelas" onchange="renderJurnalTable()" class="p-3 rounded-lg border w-full bg-white outline-none">
+								<option value="">-- Semua Kelas --</option>
+							</select>
+						</div>
+						<div>
+							<label class="block text-xs font-bold text-emerald-700 uppercase mb-1">Filter Mapel</label>
+							<select id="filter-jurnal-mapel" onchange="renderJurnalTable()" class="p-3 rounded-lg border w-full bg-white outline-none">
+								<option value="">-- Semua Mapel --</option>
+							</select>
+						</div>
+					</div>
+
+					<div id="jurnal-container" class="overflow-x-auto rounded-lg border">
+						<table class="min-w-full divide-y divide-gray-200">
+								<thead class="bg-emerald-50">
+								<tr>
+									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Tanggal</th>
+									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Kelas</th>
+									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Mapel</th>
+									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Materi</th>
+								</tr>
+							</thead>
+							<tbody id="jurnal-table-body" class="bg-white divide-y divide-gray-100"></tbody>
+						</table>
+					</div>
+				</div>
+			</section>
 
             <div id="global-loader" class="absolute inset-0 bg-white/80 flex items-center justify-center z-50 hidden">
                 <div class="loader mr-3"></div> <span class="text-blue-600 font-bold">Sinkronisasi...</span>
@@ -342,24 +358,100 @@
             } catch(e) { showNotify('error', 'Gagal.'); }
             finally { showLoader(false); }
         }
+			
+		async function fetchJurnalData() {
+			const tbody = document.getElementById('jurnal-table-body');
+			tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center">Memuat data...</td></tr>';
+			
+			try {
+				const res = await fetch(`${GAS_API_URL}?action=get_absensi_history`);
+				const rawData = await res.json();
+				
+				// --- LOGIKA MENGHAPUS DUPLIKASI ---
+				// Kita gunakan Map dengan key gabungan (tanggal + kelas + mapel)
+				const uniqueDataMap = new Map();
+				
+				rawData.forEach(item => {
+					const key = `${item.tanggal}-${item.kelas}-${item.mapel}`;
+					if (!uniqueDataMap.has(key)) {
+						uniqueDataMap.set(key, item);
+					}
+				});
 
-        async function fetchJurnalData() {
-            const tbody = document.getElementById('jurnal-table-body');
-            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center">Memuat...</td></tr>';
-            try {
-                const res = await fetch(`${GAS_API_URL}?action=get_absensi_history`);
-                const data = await res.json();
-                tbody.innerHTML = data.reverse().slice(0, 30).map(j => `
-                    <tr class="text-sm">
-                        <td class="p-4 text-gray-500">${j.tanggal}</td>
-                        <td class="p-4 font-bold text-gray-800">${j.kelas}</td>
-                        <td class="p-4 text-blue-600 font-medium">${j.mapel}</td>
-                        <td class="p-4 text-gray-600 italic">${j.materi || '-'}</td>
-                    </tr>
-                `).join('');
-            } catch(e) { tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Gagal.</td></tr>'; }
-        }
+				// Ubah kembali ke array dan balik urutannya (terbaru di atas)
+				allJurnalData = Array.from(uniqueDataMap.values()).reverse();
 
+				// Update pilihan di dropdown filter secara otomatis
+				populateFilters(allJurnalData);
+				
+				// Tampilkan ke tabel
+				renderJurnalTable();
+
+			} catch(e) { 
+				console.error(e);
+				tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Gagal mengambil data.</td></tr>'; 
+			}
+		}
+
+		function populateFilters(data) {
+			const kelasSelect = document.getElementById('filter-jurnal-kelas');
+			const mapelSelect = document.getElementById('filter-jurnal-mapel');
+			
+			// Ambil list unik untuk filter
+			const daftarKelas = [...new Set(data.map(item => item.kelas))].sort();
+			const daftarMapel = [...new Set(data.map(item => item.mapel))].sort();
+
+			// Reset dropdown tapi sisihkan opsi pertama
+			kelasSelect.innerHTML = '<option value="">-- Semua Kelas --</option>';
+			mapelSelect.innerHTML = '<option value="">-- Semua Mapel --</option>';
+
+			daftarKelas.forEach(k => kelasSelect.innerHTML += `<option value="${k}">${k}</option>`);
+			daftarMapel.forEach(m => mapelSelect.innerHTML += `<option value="${m}">${m}</option>`);
+		}
+
+		function renderJurnalTable() {
+			const tbody = document.getElementById('jurnal-table-body');
+			const filterKelas = document.getElementById('filter-jurnal-kelas').value;
+			const filterMapel = document.getElementById('filter-jurnal-mapel').value;
+
+			// --- LOGIKA BARU: CEK APAKAH FILTER SUDAH DIPILIH ---
+			if (filterKelas === "" || filterMapel === "") {
+				tbody.innerHTML = `
+					<tr>
+						<td colspan="4" class="p-12 text-center">
+							<div class="flex flex-col items-center justify-center text-gray-400">
+								<i data-lucide="search" class="w-12 h-12 mb-3 opacity-20"></i>
+								<p class="text-lg font-medium">Silakan pilih Kelas dan Mapel terlebih dahulu</p>
+								<p class="text-sm">Data riwayat akan muncul setelah kedua filter ditentukan.</p>
+							</div>
+						</td>
+					</tr>
+				`;
+				// Re-render icon lucide jika Anda menggunakannya
+				if (typeof lucide !== 'undefined') lucide.createIcons();
+				return;
+			}
+
+			// Filter data berdasarkan pilihan user
+			const filtered = allJurnalData.filter(item => {
+				return item.kelas === filterKelas && item.mapel === filterMapel;
+			});
+
+			if (filtered.length === 0) {
+				tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">Tidak ada riwayat mengajar untuk kombinasi ini.</td></tr>';
+				return;
+			}
+
+			// Tampilkan data jika filter sudah lengkap dan data ditemukan
+			tbody.innerHTML = filtered.map(j => `
+				<tr class="text-sm hover:bg-gray-50 transition-colors">
+					<td class="p-4 text-gray-500">${j.tanggal}</td>
+					<td class="p-4 font-bold text-gray-800">${j.kelas}</td>
+					<td class="p-4 text-blue-600 font-medium">${j.mapel}</td>
+					<td class="p-4 text-gray-600 italic">${j.materi || '-'}</td>
+				</tr>
+			`).join('');
+		}
         function showNotify(type, msg) {
             const container = document.getElementById('notification-container');
             const el = document.createElement('div');
