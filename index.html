@@ -5,13 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistem Dashboard Sekolah - Google Auth</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Icons (Lucide) -->
     <script src="https://unpkg.com/lucide@0.292.0"></script>
 
-    <!-- Google Identity Services SDK -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
     <style>
@@ -24,22 +21,20 @@
     </style>
 </head>
 <body class="bg-gray-50">
-		 <!-- Auth Modal -->
-		<div id="auth-overlay" class="fixed inset-0 bg-gray-900/90 z-[100] flex items-center justify-center p-4">
-			<div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
-				<div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center text-white mx-auto mb-4">
-					<i data-lucide="lock" class="w-8 h-8"></i>
-				</div>
-				<h2 class="text-2xl font-bold text-gray-800 mb-2">Akses Terbatas</h2>
-				<p class="text-gray-500 mb-6 text-sm">Silakan masuk dengan akun Google untuk menggunakan dashboard.</p>
-				<div id="google-btn-container" class="flex justify-center"></div>
-			</div>
-		</div>
 
-		<div id="main-app" class="min-h-screen flex flex-col md:flex-row max-w-7xl mx-auto shadow-2xl overflow-hidden bg-white blur-sm pointer-events-none transition-all duration-500">
+    <div id="auth-overlay" class="fixed inset-0 bg-gray-900/90 z-[100] flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl max-w-sm w-full text-center">
+            <div class="bg-blue-600 w-16 h-16 rounded-full flex items-center justify-center text-white mx-auto mb-4">
+                <i data-lucide="lock" class="w-8 h-8"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Akses Terbatas</h2>
+            <p class="text-gray-500 mb-6 text-sm">Silakan masuk dengan akun Google untuk menggunakan dashboard.</p>
+            <div id="google-btn-container" class="flex justify-center"></div>
+        </div>
+    </div>
+
+    <div id="main-app" class="min-h-screen flex flex-col md:flex-row max-w-7xl mx-auto shadow-2xl overflow-hidden bg-white blur-sm pointer-events-none transition-all duration-500">
         
-   
-        <!-- SIDEBAR -->
         <aside class="md:w-64 bg-white border-r border-gray-200 flex flex-col z-10">
             <div class="p-6 border-b border-gray-100 flex items-center space-x-3">
                 <div class="bg-blue-600 text-white p-2 rounded-lg">
@@ -76,11 +71,9 @@
             </div>
         </aside>
 
-        <!-- MAIN CONTENT -->
         <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
             <div id="notification-container" class="fixed top-4 right-4 z-[110] pointer-events-none"></div>
 
-            <!-- Tab: Dashboard -->
             <section id="tab-dashboard" class="tab-content p-8 overflow-y-auto">
                 <div class="mb-8">
                     <h2 class="text-3xl font-extrabold text-gray-900" id="welcome-msg">Halo, Selamat Datang</h2>
@@ -102,26 +95,24 @@
                 </div>
             </section>
 
-            <!-- Tab: Absensi -->
             <section id="tab-absensi" class="tab-content p-8 overflow-y-auto hidden-tab">
                 <div class="glass-panel p-6 rounded-xl shadow-sm border mb-6">
                     <h2 class="text-xl font-bold text-blue-800 mb-4 flex items-center"><i data-lucide="clipboard-list" class="mr-2"></i> Input Kehadiran</h2>
-                    
-					
-					
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <select id="absensi-kelas" onchange="loadSiswaAbsensi()" class="p-3 rounded-lg border w-full bg-white outline-none"><option value="">-- Pilih Kelas --</option></select>
+                        <select id="absensi-mapel" class="p-3 rounded-lg border w-full bg-white outline-none"><option value="">-- Pilih Mapel --</option></select>
+                    </div>
                     <input type="text" id="absensi-materi" placeholder="Ketik materi hari ini..." class="w-full p-3 rounded-lg border mt-4 outline-none focus:ring-2 ring-blue-300">
                 </div>
                 <div id="absensi-list" class="space-y-3 pb-24"></div>
             </section>
 
-            <!-- Tab: Nilai -->
             <section id="tab-nilai" class="tab-content p-8 overflow-y-auto hidden-tab">
                 <div class="glass-panel p-6 rounded-xl shadow-sm border border-purple-100 mb-6">
                     <h2 class="text-xl font-bold text-purple-800 mb-4 flex items-center"><i data-lucide="award" class="mr-2"></i> Input Nilai Ujian</h2>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <select id="nilai-kelas" onchange="loadSiswaNilai()" class="p-3 rounded-lg border bg-white outline-none"><option value="">- Kelas -</option></select>
                         <select id="nilai-mapel" class="p-3 rounded-lg border bg-white outline-none"><option value="">- Mapel -</option></select>
-                        <!-- Dropdown Jenis Ujian yang akan diisi otomatis dari Sheet db Kolom E -->
                         <select id="nilai-ujian" class="p-3 rounded-lg border bg-white outline-none">
                             <option value="">- Jenis Ujian -</option>
                         </select>
@@ -130,46 +121,46 @@
                 <div id="nilai-list" class="space-y-3 pb-24"></div>
             </section>
 
-            <!-- Tab: Jurnal -->
-			<section id="tab-jurnal" class="tab-content p-8 overflow-y-auto hidden-tab">
-				<div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6">
-					<div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-						<h2 class="text-xl font-bold text-emerald-800">Riwayat Jurnal Mengajar</h2>
-						<button onclick="fetchJurnalData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm flex items-center transition-colors">
-							<i data-lucide="refresh-cw" class="mr-2 w-4 h-4"></i> Segarkan Data
-						</button>
-					</div>
+            <section id="tab-jurnal" class="tab-content p-8 overflow-y-auto hidden-tab">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-emerald-100 mb-6">
+                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                        <h2 class="text-xl font-bold text-emerald-800">Riwayat Jurnal Mengajar</h2>
+                        <button onclick="fetchJurnalData()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm flex items-center transition-colors">
+                            <i data-lucide="refresh-cw" class="mr-2 w-4 h-4"></i> Segarkan Data
+                        </button>
+                    </div>
 
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-emerald-50 p-4 rounded-lg">
-						<div>
-							<label class="block text-xs font-bold text-emerald-700 uppercase mb-1">Filter Kelas</label>
-							<select id="filter-jurnal-kelas" onchange="renderJurnalTable()" class="p-3 rounded-lg border w-full bg-white outline-none">
-								<option value="">-- Semua Kelas --</option>
-							</select>
-						</div>
-						<div>
-							<label class="block text-xs font-bold text-emerald-700 uppercase mb-1">Filter Mapel</label>
-							<select id="filter-jurnal-mapel" onchange="renderJurnalTable()" class="p-3 rounded-lg border w-full bg-white outline-none">
-								<option value="">-- Semua Mapel --</option>
-							</select>
-						</div>
-					</div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 bg-emerald-50 p-4 rounded-lg">
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-700 uppercase mb-1">Filter Kelas</label>
+                            <select id="filter-jurnal-kelas" onchange="renderJurnalTable()" class="p-3 rounded-lg border w-full bg-white outline-none">
+                                <option value="">-- Semua Kelas --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-700 uppercase mb-1">Filter Mapel</label>
+                            <select id="filter-jurnal-mapel" onchange="renderJurnalTable()" class="p-3 rounded-lg border w-full bg-white outline-none">
+                                <option value="">-- Semua Mapel --</option>
+                            </select>
+                        </div>
+                    </div>
 
-					<div id="jurnal-container" class="overflow-x-auto rounded-lg border">
-						<table class="min-w-full divide-y divide-gray-200">
-								<thead class="bg-emerald-50">
-								<tr>
-									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Tanggal</th>
-									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Kelas</th>
-									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Mapel</th>
-									<th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Materi</th>
-								</tr>
-							</thead>
-							<tbody id="jurnal-table-body" class="bg-white divide-y divide-gray-100"></tbody>
-						</table>
-					</div>
-				</div>
-			</section>
+                    <div id="jurnal-container" class="overflow-x-auto rounded-lg border">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-emerald-50">
+                                <tr>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Tanggal</th>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Kelas</th>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Mapel</th>
+                                    <th class="p-4 text-left text-xs font-bold text-emerald-700 uppercase">Materi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="jurnal-table-body" class="bg-white divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <div id="global-loader" class="absolute inset-0 bg-white/80 flex items-center justify-center z-50 hidden">
                 <div class="loader mr-3"></div> <span class="text-blue-600 font-bold">Sinkronisasi...</span>
             </div>
@@ -181,6 +172,7 @@
         const GOOGLE_CLIENT_ID = "142276774829-q7b6vicbq1hm1ltng7itehietn03l119.apps.googleusercontent.com";
 
         let dbStudents = [];
+        let allJurnalData = [];
         let userEmail = "";
 
         window.onload = () => {
@@ -228,12 +220,11 @@
                 const res = await fetch(`${GAS_API_URL}?action=get_db`);
                 dbStudents = await res.json();
                 populateFilters();
-            } catch (e) { showNotify('error', 'Gagal memuat data.'); }
+            } catch (e) { showNotify('error', 'Gagal memuat data utama.'); }
             finally { showLoader(false); }
         }
 
         function populateFilters() {
-            // Filter Kelas
             const classes = [...new Set(dbStudents.map(s => s.kelas))].filter(Boolean).sort();
             ['absensi-kelas', 'nilai-kelas'].forEach(id => {
                 const el = document.getElementById(id);
@@ -243,7 +234,6 @@
                 }
             });
 
-            // Filter Mapel
             const subjects = [...new Set(dbStudents.map(s => s.mapel))].filter(Boolean).sort();
             ['absensi-mapel', 'nilai-mapel'].forEach(id => {
                 const el = document.getElementById(id);
@@ -253,9 +243,6 @@
                 }
             });
 
-            // Filter Jenis Ujian dari Kolom E (biasanya diakses via properti 'jenis_ujian' atau 'kolom_e')
-            // Berdasarkan Code.gs headers.toLowerCase().replace(/ /g, '_')
-            // Misal di Sheet db Kolom E header-nya adalah "Jenis Ujian"
             const examTypes = [...new Set(dbStudents.map(s => s.jenis_ujian || s.ujian || s.kategori))].filter(Boolean).sort();
             const examEl = document.getElementById('nilai-ujian');
             if (examEl) {
@@ -294,7 +281,7 @@
             const mapel = document.getElementById('absensi-mapel').value;
             const materi = document.getElementById('absensi-materi').value;
             const kelas = document.getElementById('absensi-kelas').value;
-            if(!mapel || !materi) return showNotify('error', 'Isi Mapel dan Materi!');
+            if(!mapel || !materi || !kelas) return showNotify('error', 'Lengkapi data kelas, mapel, dan materi!');
 
             showLoader(true);
             const rows = document.querySelectorAll('#absensi-list > div[data-nisn]');
@@ -311,7 +298,7 @@
                 await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'save_absensi', rows: dataRows }) });
                 showNotify('success', 'Berhasil Disimpan!');
                 switchTab('dashboard');
-            } catch(e) { showNotify('error', 'Gagal.'); }
+            } catch(e) { showNotify('error', 'Gagal menyimpan.'); }
             finally { showLoader(false); }
         }
 
@@ -332,7 +319,7 @@
             const mapel = document.getElementById('nilai-mapel').value;
             const ujian = document.getElementById('nilai-ujian').value;
             const kelas = document.getElementById('nilai-kelas').value;
-            if(!mapel || !ujian) return showNotify('error', 'Pilih Mapel dan Jenis Ujian!');
+            if(!mapel || !ujian || !kelas) return showNotify('error', 'Lengkapi data kelas, mapel, dan ujian!');
 
             showLoader(true);
             const rows = document.querySelectorAll('#nilai-list > div[data-nisn]');
@@ -347,111 +334,84 @@
                 } : null;
             }).filter(r => r !== null);
 
-            if(dataRows.length === 0) { showLoader(false); return showNotify('error', 'Isi Nilai!'); }
+            if(dataRows.length === 0) { showLoader(false); return showNotify('error', 'Isi minimal satu nilai!'); }
 
             try {
                 await fetch(GAS_API_URL, { method: 'POST', body: JSON.stringify({ action: 'save_nilai', rows: dataRows }) });
                 showNotify('success', 'Nilai Tersimpan!');
                 switchTab('dashboard');
-            } catch(e) { showNotify('error', 'Gagal.'); }
+            } catch(e) { showNotify('error', 'Gagal menyimpan nilai.'); }
             finally { showLoader(false); }
         }
 
-        let allJurnalData = []; // Simpan data di sini untuk filter cepat
-			
-		async function fetchJurnalData() {
-			const tbody = document.getElementById('jurnal-table-body');
-			tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center">Memuat data...</td></tr>';
-			
-			try {
-				const res = await fetch(`${GAS_API_URL}?action=get_absensi_history`);
-				const rawData = await res.json();
-				
-				// --- LOGIKA MENGHAPUS DUPLIKASI ---
-				// Kita gunakan Map dengan key gabungan (tanggal + kelas + mapel)
-				const uniqueDataMap = new Map();
-				
-				rawData.forEach(item => {
-					const key = `${item.tanggal}-${item.kelas}-${item.mapel}`;
-					if (!uniqueDataMap.has(key)) {
-						uniqueDataMap.set(key, item);
-					}
-				});
+        async function fetchJurnalData() {
+            const tbody = document.getElementById('jurnal-table-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center">Memuat data...</td></tr>';
+            try {
+                const res = await fetch(`${GAS_API_URL}?action=get_absensi_history`);
+                const rawData = await res.json();
+                
+                // Menghilangkan duplikasi berdasarkan kunci unik
+                const uniqueDataMap = new Map();
+                rawData.forEach(item => {
+                    const key = `${item.tanggal}-${item.kelas}-${item.mapel}`;
+                    if (!uniqueDataMap.has(key)) uniqueDataMap.set(key, item);
+                });
 
-				// Ubah kembali ke array dan balik urutannya (terbaru di atas)
-				allJurnalData = Array.from(uniqueDataMap.values()).reverse();
+                allJurnalData = Array.from(uniqueDataMap.values()).reverse();
+                populateJurnalFilters(allJurnalData);
+                renderJurnalTable();
+            } catch(e) { 
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Gagal mengambil riwayat.</td></tr>'; 
+            }
+        }
 
-				// Update pilihan di dropdown filter secara otomatis
-				populateJurnalFilters(allJurnalData);
-				
-				// Tampilkan ke tabel
-				renderJurnalTable();
+        function populateJurnalFilters(data) {
+            const kSelect = document.getElementById('filter-jurnal-kelas');
+            const mSelect = document.getElementById('filter-jurnal-mapel');
+            
+            const listK = [...new Set(data.map(i => i.kelas))].sort();
+            const listM = [...new Set(data.map(i => i.mapel))].sort();
 
-			} catch(e) { 
-				console.error(e);
-				tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-red-500">Gagal mengambil data.</td></tr>'; 
-			}
-		}
+            const currentK = kSelect.value;
+            const currentM = mSelect.value;
 
-		function populateJurnalFilters(data) {
-			const kelasSelect = document.getElementById('filter-jurnal-kelas');
-			const mapelSelect = document.getElementById('filter-jurnal-mapel');
-			
-			// Ambil list unik untuk filter
-			const daftarKelas = [...new Set(data.map(item => item.kelas))].sort();
-			const daftarMapel = [...new Set(data.map(item => item.mapel))].sort();
+            kSelect.innerHTML = '<option value="">-- Semua Kelas --</option>';
+            mSelect.innerHTML = '<option value="">-- Semua Mapel --</option>';
 
-			// Reset dropdown tapi sisihkan opsi pertama
-			kelasSelect.innerHTML = '<option value="">-- Semua Kelas --</option>';
-			mapelSelect.innerHTML = '<option value="">-- Semua Mapel --</option>';
+            listK.forEach(k => kSelect.add(new Option(k, k)));
+            listM.forEach(m => mSelect.add(new Option(m, m)));
+            
+            kSelect.value = currentK;
+            mSelect.value = currentM;
+        }
 
-			daftarKelas.forEach(k => kelasSelect.innerHTML += `<option value="${k}">${k}</option>`);
-			daftarMapel.forEach(m => mapelSelect.innerHTML += `<option value="${m}">${m}</option>`);
-		}
+        function renderJurnalTable() {
+            const tbody = document.getElementById('jurnal-table-body');
+            const fKelas = document.getElementById('filter-jurnal-kelas').value;
+            const fMapel = document.getElementById('filter-jurnal-mapel').value;
 
-		function renderJurnalTable() {
-			const tbody = document.getElementById('jurnal-table-body');
-			const filterKelas = document.getElementById('filter-jurnal-kelas').value;
-			const filterMapel = document.getElementById('filter-jurnal-mapel').value;
+            const filtered = allJurnalData.filter(item => {
+                const matchK = fKelas === "" || item.kelas === fKelas;
+                const matchM = fMapel === "" || item.mapel === fMapel;
+                return matchK && matchM;
+            });
 
-			// --- LOGIKA BARU: CEK APAKAH FILTER SUDAH DIPILIH ---
-			if (filterKelas === "" || filterMapel === "") {
-				tbody.innerHTML = `
-					<tr>
-						<td colspan="4" class="p-12 text-center">
-							<div class="flex flex-col items-center justify-center text-gray-400">
-								<i data-lucide="search" class="w-12 h-12 mb-3 opacity-20"></i>
-								<p class="text-lg font-medium">Silakan pilih Kelas dan Mapel terlebih dahulu</p>
-								<p class="text-sm">Data riwayat akan muncul setelah kedua filter ditentukan.</p>
-							</div>
-						</td>
-					</tr>
-				`;
-				// Re-render icon lucide jika Anda menggunakannya
-				if (typeof lucide !== 'undefined') lucide.createIcons();
-				return;
-			}
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">Data tidak ditemukan.</td></tr>';
+                return;
+            }
 
-			// Filter data berdasarkan pilihan user
-			const filtered = allJurnalData.filter(item => {
-				return item.kelas === filterKelas && item.mapel === filterMapel;
-			});
+            tbody.innerHTML = filtered.map(j => `
+                <tr class="text-sm hover:bg-gray-50 transition-colors">
+                    <td class="p-4 text-gray-500">${j.tanggal}</td>
+                    <td class="p-4 font-bold text-gray-800">${j.kelas}</td>
+                    <td class="p-4 text-blue-600 font-medium">${j.mapel}</td>
+                    <td class="p-4 text-gray-600 italic">${j.materi || '-'}</td>
+                </tr>
+            `).join('');
+        }
 
-			if (filtered.length === 0) {
-				tbody.innerHTML = '<tr><td colspan="4" class="p-10 text-center text-gray-400">Tidak ada riwayat mengajar untuk kombinasi ini.</td></tr>';
-				return;
-			}
-
-			// Tampilkan data jika filter sudah lengkap dan data ditemukan
-			tbody.innerHTML = filtered.map(j => `
-				<tr class="text-sm hover:bg-gray-50 transition-colors">
-					<td class="p-4 text-gray-500">${j.tanggal}</td>
-					<td class="p-4 font-bold text-gray-800">${j.kelas}</td>
-					<td class="p-4 text-blue-600 font-medium">${j.mapel}</td>
-					<td class="p-4 text-gray-600 italic">${j.materi || '-'}</td>
-				</tr>
-			`).join('');
-		}
         function showNotify(type, msg) {
             const container = document.getElementById('notification-container');
             const el = document.createElement('div');
